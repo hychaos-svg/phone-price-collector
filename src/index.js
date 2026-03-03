@@ -10,6 +10,17 @@ const { getStorage } = require('./storage');
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
+function handleHealth(req, res) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.statusCode = 200;
+    res.end(JSON.stringify({ 
+        status: 'ok', 
+        service: 'phone-price-collector',
+        version: '2.0.0',
+        timestamp: new Date().toISOString()
+    }));
+}
+
 async function handleCollect(req, res) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     
@@ -165,6 +176,8 @@ async function handleRequest(req, res) {
     
     if (pathname === '/' || pathname === '/index.html') {
         serveStatic(req, res, 'index.html');
+    } else if (pathname === '/health' || pathname === '/api/health') {
+        handleHealth(req, res);
     } else if (pathname === '/api/collect') {
         await handleCollect(req, res);
     } else if (pathname === '/api/files') {

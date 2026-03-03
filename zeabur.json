@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.zeabur.app/template.json",
+  "name": "phone-price-collector",
+  "description": "手机价格采集系统",
+  "services": [
+    {
+      "type": "NODEJS",
+      "name": "phone-price-collector",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/hychaos-svg/phone-price-collector.git"
+      },
+      "env": {
+        "PORT": "3001",
+        "STORAGE_TYPE": "local"
+      }
+    }
+  ]
+}
