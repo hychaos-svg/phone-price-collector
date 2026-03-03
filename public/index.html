@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机价格采集系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                        <line x1="12" y1="18" x2="12" y2="18"/>
+                    </svg>
+                    <span class="logo-text">手机价格采集系统</span>
+                </div>
+                <button class="btn-collect" id="btnCollect" onclick="triggerCollect()">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                        <polyline points="21 3 21 9 15 9"/>
+                    </svg>
+                    <span>立即采集</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="main">
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon--time">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">上次采集</span>
+                        <span class="stat-value" id="lastCollect">--</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon--data">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">总数据量</span>
+                        <span class="stat-value" id="totalData">--</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon--files">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">文件数量</span>
+                        <span class="stat-value" id="totalFiles">--</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon--quality">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">数据质量</span>
+                        <span class="stat-value" id="dataQuality">--</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="quality-report" id="qualitySection" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        数据质量报告
+                    </h2>
+                </div>
+                <div class="quality-content">
+                    <div class="quality-item quality-item--corrected">
+                        <span class="quality-badge">已修正</span>
+                        <span class="quality-count" id="correctedCount">0</span>
+                        <span class="quality-desc">价格末尾多零</span>
+                    </div>
+                    <div class="quality-item quality-item--abnormal">
+                        <span class="quality-badge">异常</span>
+                        <span class="quality-count" id="abnormalCount">0</span>
+                        <span class="quality-desc">价格超出合理区间</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="brands-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                        品牌数据统计
+                    </h2>
+                </div>
+                <div class="brands-chart" id="brandsChart">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <section class="files-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        历史文件
+                    </h2>
+                    <button class="btn-refresh" onclick="loadFiles()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        刷新
+                    </button>
+                </div>
+                <div class="files-table-container">
+                    <table class="files-table">
+                        <thead>
+                            <tr>
+                                <th>文件名</th>
+                                <th>大小</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filesList">
+                            <tr>
+                                <td colspan="4" class="empty-row">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>手机价格采集系统 v2.0 | 数据来源: sjpif.net</p>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-spinner"></div>
+            <p class="modal-text">正在采集数据，请稍候...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

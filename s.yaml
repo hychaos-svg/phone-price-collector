@@ -1,0 +1,45 @@
+edition: 1.0.0
+name: phone-price-collector
+access: default
+
+vars:
+  region: cn-hangzhou
+
+services:
+  price-collector:
+    component: fc
+    props:
+      region: ${vars.region}
+      service:
+        name: price-collector
+        description: 手机价格采集系统
+        internetAccess: true
+        
+      function:
+        name: collector
+        description: 价格采集函数
+        runtime: nodejs16
+        codeUri: ./
+        handler: src/index.handler
+        timeout: 300
+        memorySize: 512
+        environmentVariables:
+          STORAGE_TYPE: oss
+          OSS_BUCKET: your-bucket-name
+          OSS_REGION: ${vars.region}
+          
+      triggers:
+        - name: httpTrigger
+          type: http
+          config:
+            authType: anonymous
+            methods:
+              - GET
+              - POST
+              
+        - name: timerTrigger
+          type: timer
+          config:
+            cronExpression: "0 0 20 * * *"
+            enable: true
+            payload: '{"trigger":"timer"}'

@@ -1,0 +1,26 @@
+{
+  "name": "phone-price-collector",
+  "version": "2.0.0",
+  "description": "手机价格采集系统 - 支持多云部署",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "collect": "node -e \"require('./src/collector').collectAllPrices().then(p => console.log('采集完成:', p.length, '条'))\"",
+    "dev": "node src/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "exceljs": "^4.4.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "phone",
+    "price",
+    "collector",
+    "excel"
+  ],
+  "license": "MIT"
+}
