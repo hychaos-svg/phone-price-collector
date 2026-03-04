@@ -94,6 +94,7 @@ class VercelBlobStorage extends StorageInterface {
         this.list = null;
         this.del = null;
         this.head = null;
+        this.download = null;
         this.initialized = false;
     }
 
@@ -105,6 +106,7 @@ class VercelBlobStorage extends StorageInterface {
             this.list = blob.list;
             this.del = blob.del;
             this.head = blob.head;
+            this.download = blob.download;
             this.initialized = true;
         } catch (error) {
             console.error('Vercel Blob not available:', error.message);
@@ -124,11 +126,10 @@ class VercelBlobStorage extends StorageInterface {
     async getFile(filename) {
         await this._init();
         try {
-            const blobInfo = await this.head(filename);
-            if (!blobInfo) return null;
-            
-            const response = await fetch(blobInfo.url);
-            return Buffer.from(await response.arrayBuffer());
+            const blob = await this.download(filename, {
+                token: process.env.BLOB_READ_WRITE_TOKEN
+            });
+            return Buffer.from(await blob.arrayBuffer());
         } catch (error) {
             console.error('getFile error:', error.message);
             return null;
