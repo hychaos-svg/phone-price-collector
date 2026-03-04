@@ -16,9 +16,7 @@
     "cheerio": "^1.0.0-rc.12",
     "exceljs": "^4.4.0",
     "iconv-lite": "^0.6.3",
-    "node-cron": "^3.0.0"
-  },
-  "devDependencies": {
+    "node-cron": "^3.0.0",
     "@vercel/blob": "^0.24.0"
   },
   "engines": {
