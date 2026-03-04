@@ -1,6 +1,7 @@
 const API_BASE = '';
 
 let lastCollectResult = null;
+let scheduleConfig = null;
 
 function formatBytes(bytes) {
     if (bytes === 0) return '0 B';
@@ -28,6 +29,17 @@ function formatDate(dateStr) {
     });
 }
 
+function formatDateTime(dateStr) {
+    if (!dateStr) return '--';
+    const date = new Date(dateStr);
+    return date.toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -44,6 +56,120 @@ function showModal(show = true) {
         modal.classList.add('show');
     } else {
         modal.classList.remove('show');
+    }
+}
+
+function toggleSchedulePanel() {
+    const panel = document.getElementById('schedulePanel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleDay(btn) {
+    btn.classList.toggle('active');
+    updateSchedule();
+}
+
+function getSelectedDays() {
+    const activeBtns = document.querySelectorAll('.day-btn.active');
+    return Array.from(activeBtns).map(btn => parseInt(btn.dataset.day));
+}
+
+function setSelectedDays(days) {
+    document.querySelectorAll('.day-btn').forEach(btn => {
+        const day = parseInt(btn.dataset.day);
+        btn.classList.toggle('active', days.includes(day));
+    });
+}
+
+function updateFrequencyUI() {
+    const frequency = document.querySelector('input[name="frequency"]:checked').value;
+    document.getElementById('weeklyDays').style.display = frequency === 'weekly' ? 'flex' : 'none';
+    document.getElementById('monthlyDays').style.display = frequency === 'monthly' ? 'flex' : 'none';
+}
+
+async function loadSchedule() {
+    try {
+        const response = await fetch(API_BASE + '/api/schedule');
+        const data = await response.json();
+        
+        if (data.success) {
+            scheduleConfig = data.config;
+            
+            document.getElementById('scheduleEnabled').checked = scheduleConfig.enabled;
+            document.getElementById('timeStart').value = scheduleConfig.timeWindow.start;
+            document.getElementById('timeEnd').value = scheduleConfig.timeWindow.end;
+            
+            const frequencyRadio = document.querySelector(`input[name="frequency"][value="${scheduleConfig.frequency.type}"]`);
+            if (frequencyRadio) frequencyRadio.checked = true;
+            
+            updateFrequencyUI();
+            
+            if (scheduleConfig.frequency.days && scheduleConfig.frequency.days.length > 0) {
+                setSelectedDays(scheduleConfig.frequency.days);
+            }
+            
+            updateScheduleStatus();
+        }
+    } catch (error) {
+        console.error('加载调度配置失败:', error);
+    }
+}
+
+function updateScheduleStatus() {
+    const statusEl = document.getElementById('scheduleStatus');
+    const nextRunEl = document.getElementById('nextRun');
+    
+    if (scheduleConfig && scheduleConfig.enabled) {
+        statusEl.textContent = '已启用';
+        statusEl.style.color = 'var(--accent-success)';
+        nextRunEl.textContent = formatDateTime(scheduleConfig.nextRun);
+    } else {
+        statusEl.textContent = '未启用';
+        statusEl.style.color = 'var(--text-secondary)';
+        nextRunEl.textContent = '--';
+    }
+}
+
+async function updateSchedule() {
+    updateFrequencyUI();
+    
+    const enabled = document.getElementById('scheduleEnabled').checked;
+    const timeStart = document.getElementById('timeStart').value;
+    const timeEnd = document.getElementById('timeEnd').value;
+    const frequency = document.querySelector('input[name="frequency"]:checked').value;
+    const days = getSelectedDays();
+    
+    const config = {
+        enabled,
+        timeWindow: {
+            start: timeStart,
+            end: timeEnd
+        },
+        frequency: {
+            type: frequency,
+            days: days
+        }
+    };
+    
+    try {
+        const response = await fetch(API_BASE + '/api/schedule', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(config)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            scheduleConfig = data.config;
+            updateScheduleStatus();
+            showToast(enabled ? '自动采集已启用' : '自动采集已禁用', 'success');
+        }
+    } catch (error) {
+        console.error('更新调度配置失败:', error);
+        showToast('保存配置失败', 'error');
     }
 }
 
@@ -188,7 +314,12 @@ async function triggerCollect() {
 async function init() {
     await loadStats();
     await loadFiles();
+    await loadSchedule();
     renderBrandsChart();
+    
+    document.querySelectorAll('input[name="frequency"]').forEach(radio => {
+        radio.addEventListener('change', updateFrequencyUI);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);

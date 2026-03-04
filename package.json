@@ -6,13 +6,16 @@
   "scripts": {
     "start": "node src/index.js",
     "collect": "node -e \"require('./src/collector').collectAllPrices().then(p => console.log('采集完成:', p.length, '条'))\"",
+    "collect:msrp": "node scripts/collect_msrp.js",
     "dev": "node src/index.js",
     "build": "echo 'No build required'"
   },
   "dependencies": {
     "axios": "^1.6.0",
     "cheerio": "^1.0.0-rc.12",
-    "exceljs": "^4.4.0"
+    "exceljs": "^4.4.0",
+    "iconv-lite": "^0.6.3",
+    "node-cron": "^3.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

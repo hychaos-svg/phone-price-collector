@@ -6,8 +6,9 @@ const { collectAllPrices, BRANDS } = require('./collector');
 const { validateProducts, generateQualityReport } = require('./validator');
 const { exportToExcel, getDataDate } = require('./exporter');
 const { getStorage } = require('./storage');
+const scheduler = require('./scheduler');
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3003;
 const HOST = process.env.HOST || '0.0.0.0';
 
 function handleHealth(req, res) {
@@ -143,6 +144,53 @@ async function handleStats(req, res) {
     }
 }
 
+async function handleSchedule(req, res) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    
+    try {
+        const status = scheduler.getStatus();
+        res.statusCode = 200;
+        res.end(JSON.stringify({ success: true, ...status }));
+    } catch (error) {
+        console.error('获取调度配置失败:', error);
+        res.statusCode = 500;
+        res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+}
+
+async function handleScheduleUpdate(req, res) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+        try {
+            const data = JSON.parse(body);
+            const config = scheduler.updateSchedule(data);
+            res.statusCode = 200;
+            res.end(JSON.stringify({ success: true, config }));
+        } catch (error) {
+            console.error('更新调度配置失败:', error);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ success: false, error: error.message }));
+        }
+    });
+}
+
+async function handleHistory(req, res) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    
+    try {
+        const history = scheduler.loadHistory();
+        res.statusCode = 200;
+        res.end(JSON.stringify({ success: true, history: history.slice(-20) }));
+    } catch (error) {
+        console.error('获取历史记录失败:', error);
+        res.statusCode = 500;
+        res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+}
+
 function serveStatic(req, res, filePath) {
     const publicDir = path.join(__dirname, '..', 'public');
     const fullPath = path.join(publicDir, filePath);
@@ -184,6 +232,12 @@ async function handleRequest(req, res) {
         await handleFiles(req, res);
     } else if (pathname === '/api/stats') {
         await handleStats(req, res);
+    } else if (pathname === '/api/schedule' && req.method === 'GET') {
+        await handleSchedule(req, res);
+    } else if (pathname === '/api/schedule' && req.method === 'POST') {
+        await handleScheduleUpdate(req, res);
+    } else if (pathname === '/api/history') {
+        await handleHistory(req, res);
     } else if (pathname.startsWith('/api/download/')) {
         const filename = decodeURIComponent(pathname.replace('/api/download/', ''));
         await handleDownload(req, res, filename);
@@ -199,18 +253,58 @@ function startServer() {
     
     server.listen(PORT, HOST, () => {
         console.log('========================================');
-        console.log('    手机价格采集系统已启动');
+        console.log('    价格采集系统已启动');
         console.log('========================================');
         console.log(`服务地址: http://${HOST}:${PORT}`);
         console.log(`API端点:`);
         console.log(`  - GET  /api/collect  触发采集`);
         console.log(`  - GET  /api/files    文件列表`);
         console.log(`  - GET  /api/stats    统计数据`);
+        console.log(`  - GET  /api/schedule 获取调度配置`);
+        console.log(`  - POST /api/schedule 更新调度配置`);
+        console.log(`  - GET  /api/history  执行历史`);
         console.log(`  - GET  /api/download/{filename}  下载文件`);
         console.log('========================================\n');
+        
+        scheduler.startScheduler(async () => {
+            return await performCollect();
+        });
     });
     
     return server;
+}
+
+async function performCollect() {
+    const products = await collectAllPrices({
+        onProgress: (info) => {
+            console.log(`进度: ${info.brand} - ${info.count} 条数据`);
+        },
+        brandDelay: 0,
+        shuffle: false
+    });
+    
+    if (products.length === 0) {
+        throw new Error('未获取到任何数据');
+    }
+    
+    const validationResult = validateProducts(products);
+    const qualityReport = generateQualityReport(validationResult);
+    const buffer = await exportToExcel(validationResult.validProducts, qualityReport);
+    const dateStr = getDataDate(validationResult.validProducts);
+    const filename = `手机价格_${dateStr}.xlsx`;
+    
+    const storage = getStorage();
+    await storage.saveFile(filename, buffer);
+    
+    return {
+        filename,
+        stats: {
+            total: products.length,
+            valid: validationResult.summary.valid,
+            corrected: validationResult.summary.corrected,
+            abnormal: validationResult.summary.anomalies
+        }
+    };
 }
 
 module.exports = { startServer, handleRequest };
