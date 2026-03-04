@@ -70,7 +70,7 @@ class LocalStorage extends StorageInterface {
                     name: file,
                     size: stats.size,
                     created: stats.birthtime,
-                    modified: stats.mtime
+                    stored: stats.birthtime
                 });
             }
         }
@@ -145,7 +145,7 @@ class VercelBlobStorage extends StorageInterface {
             name: blob.pathname,
             size: blob.size,
             created: new Date(blob.uploadedAt),
-            modified: new Date(blob.uploadedAt),
+            stored: new Date(blob.uploadedAt),
             url: blob.url
         })).sort((a, b) => b.created - a.created);
     }
