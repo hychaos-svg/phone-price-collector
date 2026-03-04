@@ -34,7 +34,7 @@ function parseProductList(html, brand) {
 function parseReleaseDate(dateText) {
     if (!dateText) return null;
     
-    const fullMatch = dateText.match(/(\d{4})[年,]\s*(\d{1,2})[月,]\s*(\d{1,2})/);
+    const fullMatch = dateText.match(/(\d{4})年[,，]?\s*(\d{1,2})月[,，]?\s*(\d{1,2})/);
     if (fullMatch) {
         const year = fullMatch[1];
         const month = fullMatch[2].padStart(2, '0');
@@ -42,7 +42,7 @@ function parseReleaseDate(dateText) {
         return `${year}-${month}-${day}`;
     }
     
-    const yearMatch = dateText.match(/(\d{4})[年,]/);
+    const yearMatch = dateText.match(/(\d{4})年/);
     if (yearMatch) {
         return `${yearMatch[1]}-01-01`;
     }
@@ -61,7 +61,42 @@ function parseProductDetail(html, basicInfo) {
         storageOptions: [],
         colors: [],
         msrp: basicInfo.msrp,
-        variants: []
+        variants: [],
+        modelPrices: []
+    };
+
+    $('.b-tb table').first().find('tr').each((i, tr) => {
+        const $tr = $(tr);
+        const $tds = $tr.find('td');
+        
+        if ($tds.length >= 3) {
+            const model = $($tds[0]).text().trim();
+            const priceText = $($tds[2]).text().trim();
+            const priceMatch = priceText.match(/￥(\d+)/);
+            
+            if (model && priceMatch) {
+                result.modelPrices.push({
+                    model: model,
+                    price: parseInt(priceMatch[1])
+                });
+            }
+        }
+    });
+
+    return result;
+}
+
+function parseProductParams(html, basicInfo) {
+    const $ = cheerio.load(html);
+    const result = {
+        brand: basicInfo.brand,
+        model: basicInfo.model,
+        series: '',
+        releaseDate: '',
+        ramOptions: [],
+        storageOptions: [],
+        colors: [],
+        msrp: basicInfo.msrp
     };
 
     const params = {};
@@ -105,35 +140,41 @@ function parseProductDetail(html, basicInfo) {
         }
     }
 
-    if (result.ramOptions.length > 0 && result.storageOptions.length > 0) {
-        for (const ram of result.ramOptions) {
-            for (const storage of result.storageOptions) {
+    return result;
+}
+
+function generateVariants(modelPrice, params) {
+    const variants = [];
+    
+    if (params.ramOptions.length > 0 && params.storageOptions.length > 0) {
+        for (const ram of params.ramOptions) {
+            for (const storage of params.storageOptions) {
                 const version = `${ram}+${storage}`;
                 
-                if (result.colors.length > 0) {
-                    for (const color of result.colors) {
-                        result.variants.push({
-                            brand: result.brand,
-                            series: result.series,
-                            model: result.model,
-                            releaseDate: result.releaseDate,
+                if (params.colors.length > 0) {
+                    for (const color of params.colors) {
+                        variants.push({
+                            brand: params.brand,
+                            series: params.series,
+                            model: modelPrice.model,
+                            releaseDate: params.releaseDate,
                             version: version,
                             color: color,
-                            msrp: result.msrp,
+                            msrp: modelPrice.price,
                             otherParams: '',
                             dataSource: 'pconline',
                             collectTime: new Date().toISOString().split('T')[0]
                         });
                     }
                 } else {
-                    result.variants.push({
-                        brand: result.brand,
-                        series: result.series,
-                        model: result.model,
-                        releaseDate: result.releaseDate,
+                    variants.push({
+                        brand: params.brand,
+                        series: params.series,
+                        model: modelPrice.model,
+                        releaseDate: params.releaseDate,
                         version: version,
                         color: '',
-                        msrp: result.msrp,
+                        msrp: modelPrice.price,
                         otherParams: '',
                         dataSource: 'pconline',
                         collectTime: new Date().toISOString().split('T')[0]
@@ -141,117 +182,75 @@ function parseProductDetail(html, basicInfo) {
                 }
             }
         }
-    } else if (result.storageOptions.length > 0) {
-        for (const storage of result.storageOptions) {
-            if (result.colors.length > 0) {
-                for (const color of result.colors) {
-                    result.variants.push({
-                        brand: result.brand,
-                        series: result.series,
-                        model: result.model,
-                        releaseDate: result.releaseDate,
+    } else if (params.storageOptions.length > 0) {
+        for (const storage of params.storageOptions) {
+            if (params.colors.length > 0) {
+                for (const color of params.colors) {
+                    variants.push({
+                        brand: params.brand,
+                        series: params.series,
+                        model: modelPrice.model,
+                        releaseDate: params.releaseDate,
                         version: storage,
                         color: color,
-                        msrp: result.msrp,
+                        msrp: modelPrice.price,
                         otherParams: '',
                         dataSource: 'pconline',
                         collectTime: new Date().toISOString().split('T')[0]
                     });
                 }
             } else {
-                result.variants.push({
-                    brand: result.brand,
-                    series: result.series,
-                    model: result.model,
-                    releaseDate: result.releaseDate,
+                variants.push({
+                    brand: params.brand,
+                    series: params.series,
+                    model: modelPrice.model,
+                    releaseDate: params.releaseDate,
                     version: storage,
                     color: '',
-                    msrp: result.msrp,
+                    msrp: modelPrice.price,
                     otherParams: '',
                     dataSource: 'pconline',
                     collectTime: new Date().toISOString().split('T')[0]
                 });
             }
         }
-    } else if (result.colors.length > 0) {
-        for (const color of result.colors) {
-            result.variants.push({
-                brand: result.brand,
-                series: result.series,
-                model: result.model,
-                releaseDate: result.releaseDate,
+    } else if (params.colors.length > 0) {
+        for (const color of params.colors) {
+            variants.push({
+                brand: params.brand,
+                series: params.series,
+                model: modelPrice.model,
+                releaseDate: params.releaseDate,
                 version: '',
                 color: color,
-                msrp: result.msrp,
+                msrp: modelPrice.price,
                 otherParams: '',
                 dataSource: 'pconline',
                 collectTime: new Date().toISOString().split('T')[0]
             });
         }
-    } else if (result.msrp) {
-        result.variants.push({
-            brand: result.brand,
-            series: result.series,
-            model: result.model,
-            releaseDate: result.releaseDate,
+    } else {
+        variants.push({
+            brand: params.brand,
+            series: params.series,
+            model: modelPrice.model,
+            releaseDate: params.releaseDate,
             version: '',
             color: '',
-            msrp: result.msrp,
+            msrp: modelPrice.price,
             otherParams: '',
             dataSource: 'pconline',
             collectTime: new Date().toISOString().split('T')[0]
         });
     }
-
-    return result;
-}
-
-function extractVersion(text) {
-    const versionMatch = text.match(/(\d+)\s*GB\s*[+＋]\s*(\d+)\s*GB/i);
-    if (versionMatch) {
-        return `${versionMatch[1]}GB+${versionMatch[2]}GB`;
-    }
     
-    const simpleMatch = text.match(/(\d+)\s*[Gg][Bb]/);
-    if (simpleMatch) {
-        return `${simpleMatch[1]}GB`;
-    }
-    
-    return '';
-}
-
-function extractColor(text) {
-    const colorKeywords = ['黑', '白', '蓝', '红', '金', '银', '灰', '紫', '绿', '粉', '橙', '黄', '青', '褐'];
-    
-    for (const color of colorKeywords) {
-        if (text.includes(color)) {
-            const colorMatch = text.match(new RegExp(`[\\u4e00-\\u9fa5]*${color}[\\u4e00-\\u9fa5]*`));
-            if (colorMatch) {
-                return colorMatch[0];
-            }
-        }
-    }
-    
-    return '';
-}
-
-function extractOtherParams(text) {
-    const specialKeywords = ['典藏版', '限定版', '特别版', '尊享版', '设计师', '联名', '定制', '非凡大师', '保时捷'];
-    
-    for (const keyword of specialKeywords) {
-        if (text.includes(keyword)) {
-            return keyword;
-        }
-    }
-    
-    return '';
+    return variants;
 }
 
 module.exports = {
     parseProductList,
     parseProductDetail,
+    parseProductParams,
     parseReleaseDate,
-    extractVersion,
-    extractColor,
-    extractOtherParams
+    generateVariants
 };

@@ -58,13 +58,11 @@ async function collectBrandProducts(brand, maxPages = 3) {
                 const price = priceMatch ? parseInt(priceMatch[1]) : null;
                 
                 const fullUrl = href.startsWith('http') ? href : `https:${href}`;
-                const detailUrl = fullUrl.replace('.html', '_detail.html');
                 
                 allProducts.push({
                     brand: brand.name,
                     model: text,
                     url: fullUrl,
-                    detailUrl: detailUrl,
                     msrp: price
                 });
             }

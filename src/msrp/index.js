@@ -1,6 +1,6 @@
 const { BRANDS, TIME_FILTER } = require('./brands');
-const { collectBrandProducts, collectProductDetail } = require('./zolCollector');
-const { parseProductDetail } = require('./parser');
+const { collectBrandProducts, collectProductDetail, fetchWithRetry } = require('./zolCollector');
+const { parseProductDetail, parseProductParams, generateVariants } = require('./parser');
 const { exportMsrpToExcel } = require('./exporter');
 const { validateMsrp, validateReleaseDate } = require('./validator');
 
@@ -51,51 +51,53 @@ async function collectMsrp(options = {}) {
                 const product = productList[j];
                 
                 try {
-                    const detailHtml = await collectProductDetail(product.detailUrl);
+                    const detailHtml = await collectProductDetail(product.url);
                     const detail = parseProductDetail(detailHtml, product);
                     
-                    const dateResult = validateReleaseDate(detail.releaseDate, startDate, endDate);
+                    const paramsUrl = product.url.replace('.html', '_detail.html');
+                    let params;
+                    try {
+                        const paramsHtml = await fetchWithRetry(paramsUrl);
+                        params = parseProductParams(paramsHtml, product);
+                    } catch (e) {
+                        params = {
+                            brand: product.brand,
+                            model: product.model,
+                            series: '',
+                            releaseDate: '',
+                            ramOptions: [],
+                            storageOptions: [],
+                            colors: [],
+                            msrp: product.msrp
+                        };
+                    }
                     
-                    if (dateResult.valid && detail.variants.length > 0) {
-                        for (const variant of detail.variants) {
-                            const msrpResult = validateMsrp(variant.msrp, variant.model, variant.series);
+                    const dateResult = validateReleaseDate(params.releaseDate, startDate, endDate);
+                    
+                    if (dateResult.valid && detail.modelPrices.length > 0) {
+                        for (const modelPrice of detail.modelPrices) {
+                            const msrpResult = validateMsrp(modelPrice.price, modelPrice.model, '');
                             
                             if (msrpResult.valid) {
-                                variant.msrp = msrpResult.msrp;
-                                allProducts.push(variant);
-                                stats.validProducts++;
-                                stats.byBrand[brand.name].valid++;
+                                const variants = generateVariants(
+                                    { model: modelPrice.model, price: msrpResult.msrp },
+                                    { ...params, releaseDate: params.releaseDate }
+                                );
+                                
+                                for (const variant of variants) {
+                                    allProducts.push(variant);
+                                    stats.validProducts++;
+                                    stats.byBrand[brand.name].valid++;
+                                }
                             } else {
                                 stats.invalidProducts++;
                                 stats.byBrand[brand.name].invalid++;
                             }
                         }
-                    } else if (!dateResult.valid && detail.releaseDate) {
+                    } else if (!dateResult.valid && params.releaseDate) {
                         console.log(`  [跳过] ${product.model} - ${dateResult.reason}`);
                         stats.invalidProducts++;
                         stats.byBrand[brand.name].invalid++;
-                    } else if (!detail.releaseDate && product.msrp) {
-                        const msrpResult = validateMsrp(product.msrp, product.model, '');
-                        
-                        if (msrpResult.valid) {
-                            allProducts.push({
-                                brand: product.brand,
-                                series: '',
-                                model: product.model,
-                                releaseDate: '',
-                                version: '',
-                                color: '',
-                                msrp: msrpResult.msrp,
-                                otherParams: '',
-                                dataSource: 'pconline',
-                                collectTime: new Date().toISOString().split('T')[0]
-                            });
-                            stats.validProducts++;
-                            stats.byBrand[brand.name].valid++;
-                        } else {
-                            stats.invalidProducts++;
-                            stats.byBrand[brand.name].invalid++;
-                        }
                     }
 
                     if (onProgress) {
@@ -106,26 +108,7 @@ async function collectMsrp(options = {}) {
                         });
                     }
                 } catch (error) {
-                    if (product.msrp) {
-                        const msrpResult = validateMsrp(product.msrp, product.model, '');
-                        
-                        if (msrpResult.valid) {
-                            allProducts.push({
-                                brand: product.brand,
-                                series: '',
-                                model: product.model,
-                                releaseDate: '',
-                                version: '',
-                                color: '',
-                                msrp: msrpResult.msrp,
-                                otherParams: '',
-                                dataSource: 'pconline',
-                                collectTime: new Date().toISOString().split('T')[0]
-                            });
-                            stats.validProducts++;
-                            stats.byBrand[brand.name].valid++;
-                        }
-                    }
+                    console.error(`  采集 ${product.model} 失败: ${error.message}`);
                 }
             }
 

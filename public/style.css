@@ -227,6 +227,20 @@ body {
     color: var(--accent-primary);
 }
 
+.files-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.retention-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 0.25rem 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+}
+
 .quality-content {
     display: flex;
     gap: 1.5rem;
