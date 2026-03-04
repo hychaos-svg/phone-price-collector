@@ -62,7 +62,8 @@ function parseProductDetail(html, basicInfo) {
         colors: [],
         msrp: basicInfo.msrp,
         variants: [],
-        modelPrices: []
+        modelPrices: [],
+        skus: []
     };
 
     $('.b-tb table').first().find('tr').each((i, tr) => {
@@ -82,6 +83,59 @@ function parseProductDetail(html, basicInfo) {
             }
         }
     });
+
+    $('.product-version .item').each((i, el) => {
+        const $item = $(el);
+        const name = $item.text().trim();
+        const skuid = $item.attr('data-skuid');
+        
+        if (name && skuid) {
+            result.skus.push({
+                name: name,
+                skuid: skuid
+            });
+        }
+    });
+
+    return result;
+}
+
+function parseProductPrice(html, basicInfo, skus) {
+    const $ = cheerio.load(html);
+    const result = {
+        brand: basicInfo.brand,
+        model: basicInfo.model,
+        skuPrices: []
+    };
+
+    const priceElements = [];
+    $('[class*="price"]').each((i, el) => {
+        const $el = $(el);
+        const text = $el.text().trim();
+        const priceMatch = text.match(/￥(\d{3,5})/);
+        if (priceMatch) {
+            priceElements.push({
+                price: parseInt(priceMatch[1]),
+                context: $el.parent().text().trim().substring(0, 100)
+            });
+        }
+    });
+
+    if (skus.length > 0 && priceElements.length > 0) {
+        for (let i = 0; i < skus.length; i++) {
+            const sku = skus[i];
+            const priceIndex = Math.min(i, priceElements.length - 1);
+            const price = priceElements[priceIndex]?.price;
+            
+            if (price) {
+                result.skuPrices.push({
+                    name: sku.name,
+                    skuid: sku.skuid,
+                    price: price
+                });
+            }
+        }
+    }
 
     return result;
 }
@@ -143,87 +197,22 @@ function parseProductParams(html, basicInfo) {
     return result;
 }
 
-function generateVariants(modelPrice, params) {
+function generateVariants(skuPrice, params) {
     const variants = [];
     
-    if (params.ramOptions.length > 0 && params.storageOptions.length > 0) {
-        for (const ram of params.ramOptions) {
-            for (const storage of params.storageOptions) {
-                const version = `${ram}+${storage}`;
-                
-                if (params.colors.length > 0) {
-                    for (const color of params.colors) {
-                        variants.push({
-                            brand: params.brand,
-                            series: params.series,
-                            model: modelPrice.model,
-                            releaseDate: params.releaseDate,
-                            version: version,
-                            color: color,
-                            msrp: modelPrice.price,
-                            otherParams: '',
-                            dataSource: 'pconline',
-                            collectTime: new Date().toISOString().split('T')[0]
-                        });
-                    }
-                } else {
-                    variants.push({
-                        brand: params.brand,
-                        series: params.series,
-                        model: modelPrice.model,
-                        releaseDate: params.releaseDate,
-                        version: version,
-                        color: '',
-                        msrp: modelPrice.price,
-                        otherParams: '',
-                        dataSource: 'pconline',
-                        collectTime: new Date().toISOString().split('T')[0]
-                    });
-                }
-            }
-        }
-    } else if (params.storageOptions.length > 0) {
-        for (const storage of params.storageOptions) {
-            if (params.colors.length > 0) {
-                for (const color of params.colors) {
-                    variants.push({
-                        brand: params.brand,
-                        series: params.series,
-                        model: modelPrice.model,
-                        releaseDate: params.releaseDate,
-                        version: storage,
-                        color: color,
-                        msrp: modelPrice.price,
-                        otherParams: '',
-                        dataSource: 'pconline',
-                        collectTime: new Date().toISOString().split('T')[0]
-                    });
-                }
-            } else {
-                variants.push({
-                    brand: params.brand,
-                    series: params.series,
-                    model: modelPrice.model,
-                    releaseDate: params.releaseDate,
-                    version: storage,
-                    color: '',
-                    msrp: modelPrice.price,
-                    otherParams: '',
-                    dataSource: 'pconline',
-                    collectTime: new Date().toISOString().split('T')[0]
-                });
-            }
-        }
-    } else if (params.colors.length > 0) {
+    const version = skuPrice.name || '';
+    const price = skuPrice.price;
+    
+    if (params.colors.length > 0) {
         for (const color of params.colors) {
             variants.push({
                 brand: params.brand,
                 series: params.series,
-                model: modelPrice.model,
+                model: params.model,
                 releaseDate: params.releaseDate,
-                version: '',
+                version: version,
                 color: color,
-                msrp: modelPrice.price,
+                msrp: price,
                 otherParams: '',
                 dataSource: 'pconline',
                 collectTime: new Date().toISOString().split('T')[0]
@@ -233,11 +222,11 @@ function generateVariants(modelPrice, params) {
         variants.push({
             brand: params.brand,
             series: params.series,
-            model: modelPrice.model,
+            model: params.model,
             releaseDate: params.releaseDate,
-            version: '',
+            version: version,
             color: '',
-            msrp: modelPrice.price,
+            msrp: price,
             otherParams: '',
             dataSource: 'pconline',
             collectTime: new Date().toISOString().split('T')[0]
@@ -251,6 +240,7 @@ module.exports = {
     parseProductList,
     parseProductDetail,
     parseProductParams,
+    parseProductPrice,
     parseReleaseDate,
     generateVariants
 };

@@ -79,8 +79,15 @@ async function collectProductDetail(productUrl) {
     return html;
 }
 
+async function collectProductPrice(productUrl) {
+    const priceUrl = productUrl.replace('.html', '_price.html');
+    const html = await fetchWithRetry(priceUrl);
+    return html;
+}
+
 module.exports = {
     collectBrandProducts,
     collectProductDetail,
+    collectProductPrice,
     fetchWithRetry
 };

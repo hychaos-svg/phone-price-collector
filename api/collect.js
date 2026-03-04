@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
             TIMEOUT_MS
         );
         
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             return res.status(200).json({ 
                 success: false, 
                 error: '未获取到数据',
@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
             elapsed: `${elapsed}ms`,
             stats: {
                 total: products.length,
-                valid: validationResult.summary.valid,
+                valid: validationResult.validProducts.length,
                 corrected: validationResult.summary.corrected,
                 abnormal: validationResult.summary.anomalies,
                 quality: qualityReport.summary.qualityScore
