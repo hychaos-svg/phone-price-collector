@@ -13,6 +13,6 @@ module.exports = async (req, res) => {
         const files = await storage.listFiles();
         res.status(200).json({ success: true, files });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(200).json({ success: false, error: error.message });
     }
 };

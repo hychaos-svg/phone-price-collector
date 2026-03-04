@@ -1,17 +1,10 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
-      "runtime": "@vercel/node@3",
-      "maxDuration": 60
+    "api/**/*.js": {
+      "runtime": "@vercel/node@3"
     }
   },
-  "crons": [
-    {
-      "path": "/api/cron/collect",
-      "schedule": "0 12 * * *"
-    }
-  ],
   "routes": [
     { "handle": "filesystem" },
     {
