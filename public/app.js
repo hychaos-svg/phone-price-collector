@@ -296,11 +296,22 @@ async function triggerCollect() {
             
             updateQualityReport(data.qualityReport);
             
-            showToast(`采集成功！共 ${data.stats.valid} 条有效数据`, 'success');
+            let message = `采集成功！共 ${data.stats.valid} 条有效数据`;
+            if (data.brands) {
+                message += ` (${data.brands.join('、')})`;
+            }
+            if (data.hint) {
+                message += `\n${data.hint}`;
+            }
+            showToast(message, 'success');
             
             await loadFiles();
         } else {
-            showToast('采集失败: ' + data.error, 'error');
+            let message = '采集失败: ' + data.error;
+            if (data.hint) {
+                message += `\n${data.hint}`;
+            }
+            showToast(message, 'error');
         }
     } catch (error) {
         console.error('采集失败:', error);

@@ -31,6 +31,25 @@ function parseProductList(html, brand) {
     return products;
 }
 
+function parseReleaseDate(dateText) {
+    if (!dateText) return null;
+    
+    const fullMatch = dateText.match(/(\d{4})[年,]\s*(\d{1,2})[月,]\s*(\d{1,2})/);
+    if (fullMatch) {
+        const year = fullMatch[1];
+        const month = fullMatch[2].padStart(2, '0');
+        const day = fullMatch[3].padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    const yearMatch = dateText.match(/(\d{4})[年,]/);
+    if (yearMatch) {
+        return `${yearMatch[1]}-01-01`;
+    }
+    
+    return null;
+}
+
 function parseProductDetail(html, basicInfo) {
     const $ = cheerio.load(html);
     const result = {
@@ -60,19 +79,7 @@ function parseProductDetail(html, basicInfo) {
     });
 
     if (params['发布时间']) {
-        const dateText = params['发布时间'];
-        const dateMatch = dateText.match(/(\d{4})[年,]\s*(\d{1,2})[月,]\s*(\d{1,2})/);
-        if (dateMatch) {
-            const year = dateMatch[1];
-            const month = dateMatch[2].padStart(2, '0');
-            const day = dateMatch[3].padStart(2, '0');
-            result.releaseDate = `${year}-${month}-${day}`;
-        } else {
-            const yearMatch = dateText.match(/(\d{4})[年,]/);
-            if (yearMatch) {
-                result.releaseDate = `${yearMatch[1]}-01-01`;
-            }
-        }
+        result.releaseDate = parseReleaseDate(params['发布时间']) || '';
     }
 
     if (params['型号']) {
@@ -243,6 +250,7 @@ function extractOtherParams(text) {
 module.exports = {
     parseProductList,
     parseProductDetail,
+    parseReleaseDate,
     extractVersion,
     extractColor,
     extractOtherParams

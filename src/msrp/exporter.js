@@ -13,7 +13,8 @@ function ensureDataDir() {
 function getExportFilename() {
     const now = new Date();
     const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    return `phone_msrp_${dateStr}.xlsx`;
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+    return `phone_msrp_${dateStr}_${timeStr}.xlsx`;
 }
 
 async function exportMsrpToExcel(products) {
@@ -27,7 +28,7 @@ async function exportMsrpToExcel(products) {
         { header: '系列', key: 'series', width: 20 },
         { header: '型号', key: 'model', width: 30 },
         { header: '上市时间', key: 'releaseDate', width: 12 },
-        { header: '版本', key: 'version', width: 15 },
+        { header: '版本', key: 'version', width: 18 },
         { header: '颜色', key: 'color', width: 12 },
         { header: '厂商指导价(元)', key: 'msrp', width: 15 },
         { header: '其他参数', key: 'otherParams', width: 15 }

@@ -123,14 +123,16 @@ async function collectAllPrices(options = {}) {
     const { 
         onProgress = null,
         brandDelay = 0,
-        shuffle = true 
+        shuffle = true,
+        brands = null
     } = options;
     
     console.log('开始采集价格数据...\n');
     console.log(`时间: ${new Date().toLocaleString('zh-CN')}\n`);
     
     const allProducts = [];
-    const brandsToProcess = shuffle ? [...BRANDS].sort(() => Math.random() - 0.5) : [...BRANDS];
+    let brandsToProcess = brands || BRANDS;
+    brandsToProcess = shuffle ? [...brandsToProcess].sort(() => Math.random() - 0.5) : [...brandsToProcess];
     
     for (let i = 0; i < brandsToProcess.length; i++) {
         const brand = brandsToProcess[i];
