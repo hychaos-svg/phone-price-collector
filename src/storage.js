@@ -117,7 +117,7 @@ class VercelBlobStorage extends StorageInterface {
     async saveFile(filename, buffer) {
         await this._init();
         const result = await this.put(filename, buffer, {
-            access: 'private',
+            access: 'public',
             addRandomSuffix: false
         });
         return result.url;
@@ -126,10 +126,10 @@ class VercelBlobStorage extends StorageInterface {
     async getFile(filename) {
         await this._init();
         try {
-            const blob = await this.download(filename, {
-                token: process.env.BLOB_READ_WRITE_TOKEN
-            });
-            return Buffer.from(await blob.arrayBuffer());
+            const blobInfo = await this.head(filename);
+            if (!blobInfo) return null;
+            const response = await fetch(blobInfo.url);
+            return Buffer.from(await response.arrayBuffer());
         } catch (error) {
             console.error('getFile error:', error.message);
             return null;
