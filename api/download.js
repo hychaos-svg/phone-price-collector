@@ -7,7 +7,15 @@ module.exports = async (req, res) => {
         return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
     
-    const { filename } = req.query;
+    let filename = req.query.filename;
+    
+    if (!filename) {
+        const urlPath = req.url || '';
+        const match = urlPath.match(/\/api\/download\/(.+?)(?:\?|$)/);
+        if (match) {
+            filename = decodeURIComponent(match[1]);
+        }
+    }
     
     if (!filename) {
         return res.status(400).json({ success: false, error: 'Filename required' });

@@ -1,3 +1,9 @@
 {
-  "version": 2
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/download/:filename*",
+      "destination": "/api/download"
+    }
+  ]
 }
