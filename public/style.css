@@ -227,6 +227,48 @@ body {
     color: var(--accent-primary);
 }
 
+.badge-development {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1a1a1a;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+.schedule-content.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.schedule-content.disabled * {
+    cursor: not-allowed;
+}
+
+.switch.disabled {
+    opacity: 0.5;
+}
+
+.radio-label.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.day-selector.disabled {
+    opacity: 0.5;
+}
+
+.day-selector.disabled .day-btn {
+    cursor: not-allowed;
+}
+
+.schedule-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 .files-actions {
     display: flex;
     align-items: center;

@@ -1,8 +1,6 @@
-name: Price Collection
+name: Price Collection (Manual)
 
 on:
-  schedule:
-    - cron: '0 12 * * *'
   workflow_dispatch:
     inputs:
       brands:
@@ -22,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
       
       - name: Install dependencies
@@ -35,8 +33,6 @@ jobs:
           else
             node scripts/github_collect.js
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -52,5 +48,3 @@ jobs:
           git add data/*.xlsx 2>/dev/null || true
           git diff --quiet && git diff --staged --quiet || git commit -m "Add price data $(date +'%Y-%m-%d')"
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

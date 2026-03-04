@@ -48,66 +48,67 @@
                         </svg>
                         自动采集设置
                     </h2>
+                    <span class="badge-development">开发中</span>
                 </div>
-                <div class="schedule-content">
+                <div class="schedule-content disabled">
                     <div class="schedule-row">
                         <label class="schedule-label">启用自动采集</label>
-                        <label class="switch">
-                            <input type="checkbox" id="scheduleEnabled" onchange="updateSchedule()">
+                        <label class="switch disabled">
+                            <input type="checkbox" id="scheduleEnabled" disabled>
                             <span class="slider"></span>
                         </label>
                     </div>
                     <div class="schedule-row">
                         <label class="schedule-label">时间窗口</label>
                         <div class="time-range">
-                            <input type="time" id="timeStart" value="20:00" onchange="updateSchedule()">
+                            <input type="time" id="timeStart" value="20:00" disabled>
                             <span>至</span>
-                            <input type="time" id="timeEnd" value="24:00" onchange="updateSchedule()">
+                            <input type="time" id="timeEnd" value="24:00" disabled>
                         </div>
                     </div>
                     <div class="schedule-row">
                         <label class="schedule-label">执行频率</label>
                         <div class="frequency-options">
-                            <label class="radio-label">
-                                <input type="radio" name="frequency" value="daily" checked onchange="updateSchedule()">
+                            <label class="radio-label disabled">
+                                <input type="radio" name="frequency" value="daily" checked disabled>
                                 <span>每天</span>
                             </label>
-                            <label class="radio-label">
-                                <input type="radio" name="frequency" value="weekly" onchange="updateSchedule()">
+                            <label class="radio-label disabled">
+                                <input type="radio" name="frequency" value="weekly" disabled>
                                 <span>每周</span>
                             </label>
-                            <label class="radio-label">
-                                <input type="radio" name="frequency" value="monthly" onchange="updateSchedule()">
+                            <label class="radio-label disabled">
+                                <input type="radio" name="frequency" value="monthly" disabled>
                                 <span>每月</span>
                             </label>
                         </div>
                     </div>
                     <div class="schedule-row" id="weeklyDays" style="display: none;">
                         <label class="schedule-label">选择日期</label>
-                        <div class="day-selector">
-                            <button type="button" class="day-btn" data-day="1" onclick="toggleDay(this)">一</button>
-                            <button type="button" class="day-btn" data-day="2" onclick="toggleDay(this)">二</button>
-                            <button type="button" class="day-btn" data-day="3" onclick="toggleDay(this)">三</button>
-                            <button type="button" class="day-btn" data-day="4" onclick="toggleDay(this)">四</button>
-                            <button type="button" class="day-btn" data-day="5" onclick="toggleDay(this)">五</button>
-                            <button type="button" class="day-btn" data-day="6" onclick="toggleDay(this)">六</button>
-                            <button type="button" class="day-btn" data-day="7" onclick="toggleDay(this)">日</button>
+                        <div class="day-selector disabled">
+                            <button type="button" class="day-btn" data-day="1" disabled>一</button>
+                            <button type="button" class="day-btn" data-day="2" disabled>二</button>
+                            <button type="button" class="day-btn" data-day="3" disabled>三</button>
+                            <button type="button" class="day-btn" data-day="4" disabled>四</button>
+                            <button type="button" class="day-btn" data-day="5" disabled>五</button>
+                            <button type="button" class="day-btn" data-day="6" disabled>六</button>
+                            <button type="button" class="day-btn" data-day="7" disabled>日</button>
                         </div>
                     </div>
                     <div class="schedule-row" id="monthlyDays" style="display: none;">
                         <label class="schedule-label">选择日期</label>
-                        <div class="day-selector monthly">
-                            <button type="button" class="day-btn" data-day="1" onclick="toggleDay(this)">1</button>
-                            <button type="button" class="day-btn" data-day="5" onclick="toggleDay(this)">5</button>
-                            <button type="button" class="day-btn" data-day="10" onclick="toggleDay(this)">10</button>
-                            <button type="button" class="day-btn" data-day="15" onclick="toggleDay(this)">15</button>
-                            <button type="button" class="day-btn" data-day="20" onclick="toggleDay(this)">20</button>
-                            <button type="button" class="day-btn" data-day="25" onclick="toggleDay(this)">25</button>
+                        <div class="day-selector monthly disabled">
+                            <button type="button" class="day-btn" data-day="1" disabled>1</button>
+                            <button type="button" class="day-btn" data-day="5" disabled>5</button>
+                            <button type="button" class="day-btn" data-day="10" disabled>10</button>
+                            <button type="button" class="day-btn" data-day="15" disabled>15</button>
+                            <button type="button" class="day-btn" data-day="20" disabled>20</button>
+                            <button type="button" class="day-btn" data-day="25" disabled>25</button>
                         </div>
                     </div>
                     <div class="schedule-info" id="scheduleInfo">
-                        <span class="schedule-status">状态: <strong id="scheduleStatus">未启用</strong></span>
-                        <span class="schedule-next">下次执行: <strong id="nextRun">--</strong></span>
+                        <span class="schedule-status">状态: <strong id="scheduleStatus">功能开发中</strong></span>
+                        <span class="schedule-hint">后续版本将支持定时自动采集</span>
                     </div>
                 </div>
             </section>
