@@ -20,9 +20,15 @@ class StorageInterface {
 }
 
 class LocalStorage extends StorageInterface {
-    constructor(dataDir = './data') {
+    constructor(dataDir = null) {
         super();
-        this.dataDir = path.resolve(dataDir);
+        if (dataDir) {
+            this.dataDir = path.resolve(dataDir);
+        } else if (process.env.VERCEL) {
+            this.dataDir = '/tmp/data';
+        } else {
+            this.dataDir = path.resolve('./data');
+        }
         this._ensureDataDir();
     }
 
@@ -84,22 +90,25 @@ class LocalStorage extends StorageInterface {
 class VercelBlobStorage extends StorageInterface {
     constructor() {
         super();
-        this.store = null;
+        this.put = null;
+        this.list = null;
+        this.del = null;
+        this.head = null;
         this.initialized = false;
     }
 
     async _init() {
         if (this.initialized) return;
         try {
-            const { put, list, del, head } = await import('@vercel/blob');
-            this.put = put;
-            this.list = list;
-            this.del = del;
-            this.head = head;
+            const blob = await import('@vercel/blob');
+            this.put = blob.put;
+            this.list = blob.list;
+            this.del = blob.del;
+            this.head = blob.head;
             this.initialized = true;
         } catch (error) {
             console.error('Vercel Blob not available:', error.message);
-            throw new Error('Vercel Blob storage requires @vercel/blob package');
+            throw new Error('Vercel Blob storage requires @vercel/blob package and BLOB_READ_WRITE_TOKEN');
         }
     }
 
@@ -145,16 +154,13 @@ class VercelBlobStorage extends StorageInterface {
 }
 
 function getStorage() {
-    const storageType = process.env.STORAGE_TYPE || 'local';
+    const storageType = process.env.STORAGE_TYPE;
     
-    switch (storageType) {
-        case 'local':
-            return new LocalStorage();
-        case 'vercel-blob':
-            return new VercelBlobStorage();
-        default:
-            return new LocalStorage();
+    if (storageType === 'vercel-blob') {
+        return new VercelBlobStorage();
     }
+    
+    return new LocalStorage();
 }
 
 module.exports = {
