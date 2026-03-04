@@ -50,6 +50,20 @@ function parseReleaseDate(dateText) {
     return null;
 }
 
+function cleanModelName(modelName) {
+    if (!modelName) return '';
+    
+    let cleaned = modelName
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/￥[\d,]+/g, '')
+        .replace(/¥[\d,]+/g, '')
+        .replace(/\(.*?\)/g, '')
+        .trim();
+    
+    return cleaned;
+}
+
 function parseProductDetail(html, basicInfo) {
     const $ = cheerio.load(html);
     const result = {
@@ -77,7 +91,7 @@ function parseProductDetail(html, basicInfo) {
             
             if (model && priceMatch && !model.includes('看看哪里不同') && !model.includes('>>')) {
                 result.modelPrices.push({
-                    model: model,
+                    model: cleanModelName(model),
                     price: parseInt(priceMatch[1])
                 });
             }
@@ -172,7 +186,7 @@ function parseProductParams(html, basicInfo) {
     }
 
     if (params['型号']) {
-        result.model = params['型号'];
+        result.model = cleanModelName(params['型号']);
     }
 
     if (params['运行内存']) {
@@ -204,8 +218,80 @@ function generateVariants(modelPrice, params) {
     const price = modelPrice.price;
     const model = modelPrice.model || params.model;
     
-    if (params.colors.length > 0) {
-        for (const color of params.colors) {
+    const ramOptions = params.ramOptions || [];
+    const storageOptions = params.storageOptions || [];
+    const colors = params.colors || [];
+    
+    if (ramOptions.length > 0 && storageOptions.length > 0) {
+        for (const ram of ramOptions) {
+            for (const storage of storageOptions) {
+                const fullVersion = `${ram}+${storage}`;
+                
+                if (colors.length > 0) {
+                    for (const color of colors) {
+                        variants.push({
+                            brand: params.brand,
+                            series: params.series,
+                            model: model,
+                            releaseDate: params.releaseDate,
+                            version: fullVersion,
+                            color: color,
+                            msrp: price,
+                            otherParams: '',
+                            dataSource: 'pconline',
+                            collectTime: new Date().toISOString().split('T')[0]
+                        });
+                    }
+                } else {
+                    variants.push({
+                        brand: params.brand,
+                        series: params.series,
+                        model: model,
+                        releaseDate: params.releaseDate,
+                        version: fullVersion,
+                        color: '',
+                        msrp: price,
+                        otherParams: '',
+                        dataSource: 'pconline',
+                        collectTime: new Date().toISOString().split('T')[0]
+                    });
+                }
+            }
+        }
+    } else if (storageOptions.length > 0) {
+        for (const storage of storageOptions) {
+            if (colors.length > 0) {
+                for (const color of colors) {
+                    variants.push({
+                        brand: params.brand,
+                        series: params.series,
+                        model: model,
+                        releaseDate: params.releaseDate,
+                        version: storage,
+                        color: color,
+                        msrp: price,
+                        otherParams: '',
+                        dataSource: 'pconline',
+                        collectTime: new Date().toISOString().split('T')[0]
+                    });
+                }
+            } else {
+                variants.push({
+                    brand: params.brand,
+                    series: params.series,
+                    model: model,
+                    releaseDate: params.releaseDate,
+                    version: storage,
+                    color: '',
+                    msrp: price,
+                    otherParams: '',
+                    dataSource: 'pconline',
+                    collectTime: new Date().toISOString().split('T')[0]
+                });
+            }
+        }
+    } else if (colors.length > 0) {
+        for (const color of colors) {
             variants.push({
                 brand: params.brand,
                 series: params.series,
@@ -243,5 +329,6 @@ module.exports = {
     parseProductParams,
     parseProductPrice,
     parseReleaseDate,
-    generateVariants
+    generateVariants,
+    cleanModelName
 };

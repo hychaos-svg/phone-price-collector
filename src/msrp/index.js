@@ -81,7 +81,7 @@ async function collectMsrp(options = {}) {
                             if (msrpResult.valid) {
                                 const variants = generateVariants(
                                     { model: modelPrice.model, price: msrpResult.msrp, version: '' },
-                                    { ...params, releaseDate: params.releaseDate }
+                                    { ...params, model: modelPrice.model }
                                 );
                                 
                                 for (const variant of variants) {
@@ -103,7 +103,7 @@ async function collectMsrp(options = {}) {
                         if (msrpResult.valid) {
                             const variants = generateVariants(
                                 { model: product.model, price: msrpResult.msrp, version: '' },
-                                { ...params, releaseDate: params.releaseDate }
+                                params
                             );
                             for (const variant of variants) {
                                 allProducts.push(variant);
