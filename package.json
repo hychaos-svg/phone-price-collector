@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "collect": "node -e \"require('./src/collector').collectAllPrices().then(p => console.log('采集完成:', p.length, '条'))\"",
+    "collect:github": "node scripts/github_collect.js",
     "collect:msrp": "node scripts/collect_msrp.js",
     "dev": "node src/index.js",
     "build": "echo 'No build required'"
