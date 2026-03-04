@@ -63,12 +63,12 @@ class LocalStorage extends StorageInterface {
                 fileInfos.push({
                     name: file,
                     size: stats.size,
-                    createdAt: stats.birthtime,
-                    modifiedAt: stats.mtime
+                    created: stats.birthtime,
+                    modified: stats.mtime
                 });
             }
         }
-        return fileInfos;
+        return fileInfos.sort((a, b) => b.created - a.created);
     }
 
     async deleteFile(filename) {
@@ -81,21 +81,85 @@ class LocalStorage extends StorageInterface {
     }
 }
 
+class VercelBlobStorage extends StorageInterface {
+    constructor() {
+        super();
+        this.store = null;
+        this.initialized = false;
+    }
+
+    async _init() {
+        if (this.initialized) return;
+        try {
+            const { put, list, del, head } = await import('@vercel/blob');
+            this.put = put;
+            this.list = list;
+            this.del = del;
+            this.head = head;
+            this.initialized = true;
+        } catch (error) {
+            console.error('Vercel Blob not available:', error.message);
+            throw new Error('Vercel Blob storage requires @vercel/blob package');
+        }
+    }
+
+    async saveFile(filename, buffer) {
+        await this._init();
+        const result = await this.put(filename, buffer, {
+            access: 'public',
+            addRandomSuffix: false
+        });
+        return result.url;
+    }
+
+    async getFile(filename) {
+        await this._init();
+        try {
+            const blobInfo = await this.head(filename);
+            if (!blobInfo) return null;
+            
+            const response = await fetch(blobInfo.url);
+            return Buffer.from(await response.arrayBuffer());
+        } catch (error) {
+            return null;
+        }
+    }
+
+    async listFiles() {
+        await this._init();
+        const result = await this.list();
+        return result.blobs.map(blob => ({
+            name: blob.pathname,
+            size: blob.size,
+            created: new Date(blob.uploadedAt),
+            modified: new Date(blob.uploadedAt),
+            url: blob.url
+        })).sort((a, b) => b.created - a.created);
+    }
+
+    async deleteFile(filename) {
+        await this._init();
+        await this.del(filename);
+        return true;
+    }
+}
+
 function getStorage() {
     const storageType = process.env.STORAGE_TYPE || 'local';
     
     switch (storageType) {
         case 'local':
             return new LocalStorage();
-        case 'oss':
-            throw new Error('OSS storage adapter not implemented yet');
+        case 'vercel-blob':
+            return new VercelBlobStorage();
         default:
-            throw new Error(`Unknown storage type: ${storageType}`);
+            return new LocalStorage();
     }
 }
 
 module.exports = {
     getStorage,
     LocalStorage,
+    VercelBlobStorage,
     StorageInterface
 };

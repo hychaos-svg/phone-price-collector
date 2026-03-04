@@ -1,7 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
-const fs = require('fs');
 
 async function test() {
     const url = 'https://product.pconline.com.cn/mobile/huawei/2706739_detail.html';
@@ -19,9 +18,7 @@ async function test() {
     const html = iconv.decode(Buffer.from(response.data), 'gbk');
     const $ = cheerio.load(html);
     
-    fs.writeFileSync('debug_params.html', html, 'utf8');
-    
-    console.log('\n=== 1. 查找上市时间 ===');
+    console.log('\n=== 查找发布时间 ===');
     $('tr').each((i, el) => {
         const $row = $(el);
         const $th = $row.find('th');
@@ -31,13 +28,24 @@ async function test() {
             const thText = $th.text().trim();
             const tdText = $td.text().trim();
             
-            if (thText.includes('发布') || thText.includes('上市')) {
-                console.log(`TH: "${thText}" -> TD: "${tdText}"`);
+            if (thText === '发布时间') {
+                console.log(`原始值: "${tdText}"`);
+                
+                const dateMatch = tdText.match(/(\d{4})[年,]\s*(\d{1,2})[月,]\s*(\d{1,2})/);
+                if (dateMatch) {
+                    console.log('匹配到完整日期:', dateMatch[0]);
+                }
+                
+                const yearMatch = tdText.match(/(\d{4})[年,]/);
+                if (yearMatch) {
+                    console.log('匹配到年份:', yearMatch[0]);
+                }
             }
         }
     });
     
-    console.log('\n=== 2. 查找系列 ===');
+    console.log('\n=== 查找所有参数 ===');
+    const params = {};
     $('tr').each((i, el) => {
         const $row = $(el);
         const $th = $row.find('th');
@@ -46,23 +54,16 @@ async function test() {
         if ($th.length > 0 && $td.length > 0) {
             const thText = $th.text().trim();
             const tdText = $td.text().trim();
-            
-            if (thText === '系列') {
-                console.log(`TH: "${thText}" -> TD: "${tdText}"`);
-            }
+            params[thText] = tdText;
         }
     });
     
-    console.log('\n=== 3. 所有TH标签 ===');
-    $('th').each((i, el) => {
-        const text = $(el).text().trim();
-        if (text.length > 0 && text.length < 20) {
-            const $td = $(el).next('td');
-            if ($td.length > 0) {
-                console.log(`TH: "${text}" -> TD: "${$td.text().trim().substring(0, 50)}"`);
-            }
-        }
-    });
+    console.log('型号:', params['型号']);
+    console.log('发布时间:', params['发布时间']);
+    console.log('运行内存:', params['运行内存']);
+    console.log('机身容量:', params['机身容量']);
+    console.log('手机颜色:', params['手机颜色']);
+    console.log('报价:', params['报价']);
 }
 
 test().catch(err => {

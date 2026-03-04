@@ -1,33 +1,33 @@
 const PRICE_RANGES = {
-    normal: { min: 500, max: 5000, name: '普通手机' },
-    flagship: { min: 3000, max: 15000, name: '高端旗舰' },
-    foldable: { min: 6000, max: 30000, name: '折叠屏' },
-    special: { min: 10000, max: 50000, name: '特殊机型' }
+    normal: { min: 500, max: 8000, name: '普通手机' },
+    flagship: { min: 2000, max: 20000, name: '高端旗舰' },
+    foldable: { min: 3000, max: 30000, name: '折叠屏' },
+    special: { min: 5000, max: 50000, name: '特殊机型' }
 };
 
 const PRODUCT_TYPE_KEYWORDS = {
     foldable: ['MateX', 'matex', 'Fold', 'fold', 'Flip', 'flip', '折叠', 'FOLD', 'FLIP', 'X5', 'X6'],
-    flagship: ['Pro', 'pro', 'PRO', 'Ultra', 'ultra', 'ULTRA', 'Mate', 'mate', 'MATE', 'Plus', 'plus', 'PLUS', 'Max', 'max', 'MAX', 'Magic', 'RS'],
-    special: ['典藏', '限量', '非凡', '珍藏', '定制', '保时捷', '设计师']
+    flagship: ['Pro', 'pro', 'PRO', 'Ultra', 'ultra', 'ULTRA', 'Mate', 'mate', 'MATE', 'Plus', 'plus', 'PLUS', 'Max', 'max', 'MAX', 'Magic', 'RS', 'P80', 'P90', 'iPhone'],
+    special: ['典藏', '限量', '非凡', '珍藏', '定制', '保时捷', '设计师', 'RSR']
 };
 
 function detectPriceType(model, series = '') {
-    const searchText = `${model} ${series}`.toLowerCase();
+    const searchText = `${model} ${series}`;
     
     for (const keyword of PRODUCT_TYPE_KEYWORDS.special) {
-        if (searchText.includes(keyword.toLowerCase())) {
+        if (searchText.includes(keyword)) {
             return 'special';
         }
     }
     
     for (const keyword of PRODUCT_TYPE_KEYWORDS.foldable) {
-        if (searchText.includes(keyword.toLowerCase())) {
+        if (searchText.includes(keyword)) {
             return 'foldable';
         }
     }
     
     for (const keyword of PRODUCT_TYPE_KEYWORDS.flagship) {
-        if (searchText.includes(keyword.toLowerCase())) {
+        if (searchText.includes(keyword)) {
             return 'flagship';
         }
     }
