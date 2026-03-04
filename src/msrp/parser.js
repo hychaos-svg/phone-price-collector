@@ -75,7 +75,7 @@ function parseProductDetail(html, basicInfo) {
             const priceText = $($tds[2]).text().trim();
             const priceMatch = priceText.match(/￥(\d+)/);
             
-            if (model && priceMatch) {
+            if (model && priceMatch && !model.includes('看看哪里不同') && !model.includes('>>')) {
                 result.modelPrices.push({
                     model: model,
                     price: parseInt(priceMatch[1])
@@ -197,18 +197,19 @@ function parseProductParams(html, basicInfo) {
     return result;
 }
 
-function generateVariants(skuPrice, params) {
+function generateVariants(modelPrice, params) {
     const variants = [];
     
-    const version = skuPrice.name || '';
-    const price = skuPrice.price;
+    const version = modelPrice.version || '';
+    const price = modelPrice.price;
+    const model = modelPrice.model || params.model;
     
     if (params.colors.length > 0) {
         for (const color of params.colors) {
             variants.push({
                 brand: params.brand,
                 series: params.series,
-                model: params.model,
+                model: model,
                 releaseDate: params.releaseDate,
                 version: version,
                 color: color,
@@ -222,7 +223,7 @@ function generateVariants(skuPrice, params) {
         variants.push({
             brand: params.brand,
             series: params.series,
-            model: params.model,
+            model: model,
             releaseDate: params.releaseDate,
             version: version,
             color: '',

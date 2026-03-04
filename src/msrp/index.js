@@ -1,6 +1,6 @@
 const { BRANDS, TIME_FILTER } = require('./brands');
-const { collectBrandProducts, collectProductDetail, collectProductPrice, fetchWithRetry } = require('./zolCollector');
-const { parseProductDetail, parseProductParams, parseProductPrice, generateVariants } = require('./parser');
+const { collectBrandProducts, collectProductDetail, fetchWithRetry } = require('./zolCollector');
+const { parseProductDetail, parseProductParams, generateVariants } = require('./parser');
 const { exportMsrpToExcel } = require('./exporter');
 const { validateMsrp, validateReleaseDate } = require('./validator');
 
@@ -74,77 +74,41 @@ async function collectMsrp(options = {}) {
                     
                     const dateResult = validateReleaseDate(params.releaseDate, startDate, endDate);
                     
-                    if (dateResult.valid && detail.skus.length > 0) {
-                        try {
-                            const priceHtml = await collectProductPrice(product.url);
-                            const priceData = parseProductPrice(priceHtml, product, detail.skus);
+                    if (dateResult.valid && detail.modelPrices.length > 0) {
+                        for (const modelPrice of detail.modelPrices) {
+                            const msrpResult = validateMsrp(modelPrice.price, modelPrice.model, '');
                             
-                            if (priceData.skuPrices.length > 0) {
-                                for (const skuPrice of priceData.skuPrices) {
-                                    const msrpResult = validateMsrp(skuPrice.price, product.model, '');
-                                    
-                                    if (msrpResult.valid) {
-                                        const variants = generateVariants(
-                                            { name: skuPrice.name, price: msrpResult.msrp },
-                                            { ...params, releaseDate: params.releaseDate }
-                                        );
-                                        
-                                        for (const variant of variants) {
-                                            allProducts.push(variant);
-                                            stats.validProducts++;
-                                            stats.byBrand[brand.name].valid++;
-                                        }
-                                    } else {
-                                        stats.invalidProducts++;
-                                        stats.byBrand[brand.name].invalid++;
-                                    }
-                                }
-                            } else {
-                                const msrpResult = validateMsrp(product.msrp, product.model, '');
-                                if (msrpResult.valid) {
-                                    const variants = generateVariants(
-                                        { name: '', price: msrpResult.msrp },
-                                        { ...params, releaseDate: params.releaseDate }
-                                    );
-                                    for (const variant of variants) {
-                                        allProducts.push(variant);
-                                        stats.validProducts++;
-                                        stats.byBrand[brand.name].valid++;
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            const msrpResult = validateMsrp(product.msrp, product.model, '');
                             if (msrpResult.valid) {
                                 const variants = generateVariants(
-                                    { name: '', price: msrpResult.msrp },
+                                    { model: modelPrice.model, price: msrpResult.msrp, version: '' },
                                     { ...params, releaseDate: params.releaseDate }
                                 );
+                                
                                 for (const variant of variants) {
                                     allProducts.push(variant);
                                     stats.validProducts++;
                                     stats.byBrand[brand.name].valid++;
                                 }
+                            } else {
+                                stats.invalidProducts++;
+                                stats.byBrand[brand.name].invalid++;
                             }
                         }
                     } else if (!dateResult.valid && params.releaseDate) {
                         console.log(`  [跳过] ${product.model} - ${dateResult.reason}`);
                         stats.invalidProducts++;
                         stats.byBrand[brand.name].invalid++;
-                    } else if (dateResult.valid && detail.modelPrices.length > 0) {
-                        for (const modelPrice of detail.modelPrices) {
-                            const msrpResult = validateMsrp(modelPrice.price, modelPrice.model, '');
-                            
-                            if (msrpResult.valid) {
-                                const variants = generateVariants(
-                                    { name: '', price: msrpResult.msrp },
-                                    { ...params, model: modelPrice.model, releaseDate: params.releaseDate }
-                                );
-                                for (const variant of variants) {
-                                    allProducts.push(variant);
-                                    stats.validProducts++;
-                                    stats.byBrand[brand.name].valid++;
-                                }
+                    } else if (dateResult.valid && product.msrp) {
+                        const msrpResult = validateMsrp(product.msrp, product.model, '');
+                        if (msrpResult.valid) {
+                            const variants = generateVariants(
+                                { model: product.model, price: msrpResult.msrp, version: '' },
+                                { ...params, releaseDate: params.releaseDate }
+                            );
+                            for (const variant of variants) {
+                                allProducts.push(variant);
+                                stats.validProducts++;
+                                stats.byBrand[brand.name].valid++;
                             }
                         }
                     }
