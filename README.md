@@ -94,10 +94,6 @@ PORT=3001
 └── s.yaml              # 阿里云函数计算配置
 ```
 
-## 数据来源
-
-价格数据来源于 [sjpif.net](https://www.sjpif.net)
-
 ## License
 
 MIT
